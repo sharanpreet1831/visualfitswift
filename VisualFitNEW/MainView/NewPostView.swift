@@ -21,7 +21,7 @@ struct ImagePicker: UIViewControllerRepresentable {
             self.parent = parent
         }
 
-        func imagePickerController(_ picker: UIImagePickerController, didFinishPickingMediaWithInfo info: [UIImagePickerController.InfoKey : Any]) {
+        func imagePickerController(_ picker: UIImagePickerController, didFinishPickingMediaWithInfo info: [UIImagePickerController.InfoKey: Any]) {
             if let image = info[.originalImage] as? UIImage {
                 parent.selectedImage = image
             }
@@ -47,6 +47,7 @@ struct ImagePicker: UIViewControllerRepresentable {
 }
 
 struct NewPostView: View {
+    @Environment(\.presentationMode) var presentationMode // To manage the back action
     @State private var caption: String = ""
     @State private var tagPeople: Bool = false
     @State private var audienceSelection: String = "Everyone"
@@ -62,7 +63,8 @@ struct NewPostView: View {
             // Header Section
             HStack {
                 Button(action: {
-                    // Back button action
+                    // Use presentation mode to dismiss the view
+                    presentationMode.wrappedValue.dismiss()
                 }) {
                     Image(systemName: "chevron.left")
                         .foregroundColor(.white)
@@ -197,6 +199,8 @@ struct NewPostView: View {
 
 struct NewPostView_Previews: PreviewProvider {
     static var previews: some View {
-        NewPostView()
+        NavigationView { // Ensure to use NavigationView in the previews
+            NewPostView()
+        }
     }
 }

@@ -86,7 +86,7 @@ struct WelcomeView: View {
                     .shadow(radius: 5)
 
                     // Next Button with Gradient and Shadow
-                    NavigationLink(destination: NextPageView(), isActive: $navigateToNextPage) {
+                    NavigationLink(destination: PersonalDetailsView(), isActive: $navigateToNextPage) {
                         Button(action: {
                             navigateToNextPage = true
                         }) {
@@ -109,7 +109,7 @@ struct WelcomeView: View {
                     }
                     .isDetailLink(false)
 
-                    Spacer()
+                    
                 }
             }
         }

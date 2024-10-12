@@ -5,13 +5,6 @@
 //  Created by Sharanpreet Singh  on 12/10/24.
 //
 
-//
-//  FitnessGoleView.swift
-//  check product
-//
-//  Created by iOS on 12/10/24.
-//
-
 import SwiftUI
 
 struct FitnessGoalView: View {
@@ -160,3 +153,4 @@ struct FitnessGoalView_Previews: PreviewProvider {
             .preferredColorScheme(.light)
     }
 }
+  

@@ -8,7 +8,7 @@
 import SwiftUI
 
 struct MainView: View {
-    @State var selectedTab = 1 // Set default tab (Peers tab)
+    @State var selectedTab = 0 // Set default tab to Summary (0)
 
     init() {
         // Customize the appearance of the tab bar
@@ -51,24 +51,9 @@ struct MainView: View {
                 }
                 .tag(3)
         }
-        .accentColor(.yellow) // Set the tab bar icon and text color to white
+        .accentColor(.yellow) // Set the tab bar icon and text color to yellow
     }
 }
-
-// Sample views for other tabs (Summary, Discover, Profile)
-//struct DiscoverView: View {
-//    var body: some View {
-//        Text("Discover View")
-//            .font(.largeTitle)
-//    }
-//}
-
-//struct ProfileView: View {
-//    var body: some View {
-//        Text("Profile View")
-//            .font(.largeTitle)
-//    }
-//}
 
 #Preview {
     MainView()

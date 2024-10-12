@@ -1,131 +1,160 @@
-//
-//  SetGoal.swift
-//  VisualFitNEW
-//
-//  Created by Sharanpreet Singh  on 12/10/24.
-//
-
-//
-//  SetGoalView.swift
-//  check product
-//
-//  Created by iOS on 12/10/24.
-//
-
 import SwiftUI
 
 struct SetGoalView: View {
     @State private var selectedGoal: Int = 3 // Default selected value
     @State private var showFitnessGoalView: Bool = false // Control navigation to FitnessGoalView
+    @State private var showErrorAlert: Bool = false // For showing error alerts
+    @State private var errorMessage: String = "" // To store error message
+    @State private var isSubmitting: Bool = false // To manage button state
+    @State private var showLogoutModal: Bool = false // For showing logout modal
+    @State private var navigateToWelcomeView: Bool = false
 
     var body: some View {
         NavigationView {
-            VStack(spacing: 60) {
-                // Back Button
-                HStack {
-                    Button(action: goBack) {
-                        Label("Back", systemImage: "chevron.left")
+            ZStack {
+                GeometryReader { geometry in
+                    VStack(spacing: 50) {
+                        HStack {
+                            Spacer()
+                            Button(action: {
+                                showLogoutModal.toggle()
+                            }) {
+                                Image(systemName: "power")
+                                    .font(.title2)
+                                    .foregroundColor(.white)
+                                    .padding()
+                            }
+                        }
+                        .background(Color.black.opacity(0.7))
+                        .padding(.top)
+
+                        // Goal Icon
+                        Image(systemName: "target")
+                            .resizable()
+                            .frame(width: 100, height: 100)
                             .foregroundColor(.yellow)
+
+                        // Title and Subtitle
+                        VStack(spacing: 8) {
+                            Text("Set your Goal")
+                                .font(.title2)
+                                .fontWeight(.bold)
+                                .foregroundColor(.white)
+
+                            Text("Tell us how often would you like to exercise in a week")
+                                .font(.body)
+                                .foregroundColor(.gray)
+                                .multilineTextAlignment(.center)
+                                .padding(.horizontal, 40)
+                        }
+
+                        // Scroll Picker for Goal Selection
+                        Picker("Goal", selection: $selectedGoal) {
+                            ForEach(2...7, id: \.self) { value in
+                                Text("\(value)")
+                                    .font(.title)
+                                    .foregroundColor(value == selectedGoal ? .yellow : .gray)
+                            }
+                        }
+                        .pickerStyle(WheelPickerStyle())
+                        .frame(height: 150)
+
+                        Button(action: sendToBackend) {
+                            Text(isSubmitting ? "Submitting..." : "Next")
+                                .font(.headline)
+                                .foregroundColor(.black)
+                                .frame(maxWidth: .infinity)
+                                .padding()
+                                .background(
+                                    LinearGradient(
+                                        gradient: Gradient(colors: [Color.yellow, Color.orange]),
+                                        startPoint: .leading,
+                                        endPoint: .trailing
+                                    )
+                                )
+                                .cornerRadius(12)
+                                .shadow(color: Color.yellow.opacity(0.5), radius: 10, x: 0, y: 5)
+                        }
+                        .padding(.horizontal, 20)
+                        .disabled(isSubmitting)
+
+                        if !errorMessage.isEmpty {
+                            Text(errorMessage)
+                                .foregroundColor(.red)
+                        }
+
+                        Spacer()
                     }
-                    Spacer()
-                }
-                .padding(.horizontal)
+                    .background(Color.black.edgesIgnoringSafeArea(.all))
+                    .alert(isPresented: $showErrorAlert) {
+                        Alert(title: Text("Error"), message: Text(errorMessage), dismissButton: .default(Text("OK")))
+                    }
+                    .fullScreenCover(isPresented: $showFitnessGoalView) {
+                        FitnessGoalView()
+                            .navigationBarBackButtonHidden(true)
+                    }
+                    if showLogoutModal {
+                        Color.black.opacity(0.4)
+                            .edgesIgnoringSafeArea(.all)
+                            .onTapGesture {
+                                showLogoutModal = false
+                            }
 
-                Spacer()
-
-                // Goal Icon
-                Image(systemName: "target")
-                    .resizable()
-                    .frame(width: 100, height: 100)
-                    .foregroundColor(.white)
-
-                // Title and Subtitle
-                Text("Set your Goal")
-                    .font(.title2)
-                    .fontWeight(.bold)
-                    .foregroundColor(.white)
-
-                Text("Tell us how often would you like to exercise in a week")
-                    .font(.body)
-                    .foregroundColor(.gray)
-                    .multilineTextAlignment(.center)
-                    .padding(.horizontal, 40)
-
-                // Scroll Picker for Goal Selection
-                Picker("Goal", selection: $selectedGoal) {
-                    ForEach(2...7, id: \.self) { value in
-                        Text("\(value)")
-                            .font(.title)
-                            .foregroundColor(value == selectedGoal ? .yellow : .gray)
+                        LogoutModal(isPresented: $showLogoutModal) {
+                            print("User logged out")
+                            UserDefaults.standard.removeObject(forKey: "accessToken")
+                            navigateToWelcomeView = true
+                        }
+                        .frame(maxWidth: geometry.size.width, maxHeight: geometry.size.height * 0.4)
+                        .cornerRadius(12)
+                        .transition(.move(edge: .bottom))
                     }
                 }
-                .pickerStyle(WheelPickerStyle())
-                .frame(height: 150)
-
-                // Next Button with Navigation
-                NavigationLink(destination: FitnessGoalView(), isActive: $showFitnessGoalView) {
-                    Button(action: sendGoalAndNavigate) {
-                        Text("Next")
-                            .frame(maxWidth: .infinity)
-                            .padding()
-                            .background(Color.yellow)
-                            .foregroundColor(.black)
-                            .cornerRadius(10)
-                    }
-                }
-                .padding(.horizontal, 20)
-
-                
+                .edgesIgnoringSafeArea(.bottom)
             }
-            .background(Color.black.edgesIgnoringSafeArea(.all))
+        }
+        .fullScreenCover(isPresented: $navigateToWelcomeView) {
+            WelcomeView()
         }
     }
 
-    // Function to handle navigation to the previous page
-    func goBack() {
-        // Replace with actual back navigation logic
-        print("Back button pressed")
-    }
 
-    // Function to send selected goal and navigate to the next page
-    func sendGoalAndNavigate() {
-        let goalData = ["goal": selectedGoal]
-
-        // Send data to backend
-        sendToBackend(data: goalData)
-
-        // Activate navigation to FitnessGoalView
-        showFitnessGoalView = true // Activate the NavigationLink
-        print("Navigating to next page with goal: \(selectedGoal)")
-    }
-
-    // Function to send data to backend
-    func sendToBackend(data: [String: Any]) {
-        guard let url = URL(string: "https://your-backend-url.com/api/goal") else { return }
-
-        var request = URLRequest(url: url)
-        request.httpMethod = "POST"
-        request.addValue("application/json", forHTTPHeaderField: "Content-Type")
-
-        do {
-            let jsonData = try JSONSerialization.data(withJSONObject: data, options: [])
-            request.httpBody = jsonData
-        } catch {
-            print("Failed to encode JSON: \(error)")
+    func sendToBackend() {
+        let jsonData: [String: Any] = [
+            "days": selectedGoal
+        ]
+        guard let data = try? JSONSerialization.data(withJSONObject: jsonData, options: []) else {
+            errorMessage = "Failed to serialize data."
             return
         }
 
-        URLSession.shared.dataTask(with: request) { _, response, error in
-            if let error = error {
-                print("Failed to send data: \(error.localizedDescription)")
-                return
+        isSubmitting = true
+
+        NetworkService.shared.postData(to: "http://localhost:4000/api/v1/updateGoalDetails", with: data) { (result: Result<UserGoalResponseModel, NetworkError>) in
+            isSubmitting = false
+            errorMessage = ""
+            switch result {
+            case .success(let response):
+                if response.success {
+                    print("Details Updated:  \(response.message)")
+                    UserDefaults.standard.set("true", forKey: "isGoalSetForUser")
+                    showFitnessGoalView = true
+                } else {
+                    errorMessage = response.message
+                }
+            case .failure(let error):
+                switch error {
+                case .badURL:
+                    errorMessage = "Invalid URL"
+                case .requestFailed:
+                    errorMessage = "Request failed"
+                case .decodingFailed:
+                    errorMessage = "Decoding failed"
+                }
             }
-            print("Goal data sent successfully: \(response.debugDescription)")
-        }.resume()
+        }
     }
 }
-
-
 
 struct SetGoalView_Previews: PreviewProvider {
     static var previews: some View {

@@ -1,23 +1,13 @@
-//
-//  WelcomeView.swift
-//  VisualFitNEW
-//
-//  Created by Sharanpreet Singh  on 12/10/24.
-//
-
-//
-//  WelcomeView.swift
-//  check product
-//
-//  Created by iOS on 12/10/24.
-//
-
 import SwiftUI
-import AuthenticationServices
 
 struct WelcomeView: View {
     @Environment(\.colorScheme) var colorScheme
+
+    @State private var username: String = ""
+    @State private var password: String = ""
     @State private var navigateToNextPage = false  // State to trigger navigation
+    @State private var errorMessage: String?       // State to store error message
+    @State private var isLoading = false           // State to show a loading indicator
 
     var body: some View {
         NavigationView {
@@ -49,7 +39,7 @@ struct WelcomeView: View {
                     VStack(spacing: 8) {
                         Text("Welcome to")
                             .font(.title3)
-                            .foregroundColor(.white.opacity(0.8))
+                            .foregroundColor(.white.opacity(1))
 
                         Text("VisualFit")
                             .font(.largeTitle)
@@ -66,72 +56,141 @@ struct WelcomeView: View {
 
                     Spacer()
 
-                    // Apple Sign-In Button with Styling
-                    SignInWithAppleButton(.signIn, onRequest: { request in
-                        request.requestedScopes = [.fullName, .email]
-                    }, onCompletion: { result in
-                        switch result {
-                        case .success(let authResults):
-                            print("Apple Sign-In successful: \(authResults)")
-                        case .failure(let error):
-                            print("Apple Sign-In failed: \(error.localizedDescription)")
-                        }
-                    })
-                    .signInWithAppleButtonStyle(
-                        colorScheme == .dark ? .white : .black
-                    )
-                    .frame(height: 55)
-                    .cornerRadius(12)
+                    // Text Fields for Email, Username, and Password
+                    VStack(spacing: 16) {
+                        ZStack(alignment: .leading) {
+                                        // Placeholder Text
+                            if username.isEmpty {
+                            Text("Username or Email")
+.foregroundColor(Color.white.opacity(1)) // Custom placeholder color
+                                                .padding(.leading, 5) // Aligning with text field padding
+                                        }
+                                        // Actual TextField
+                                        TextField("", text: $username)
+                                            .padding()
+                                            .background(Color.white.opacity(0.2))
+                                            .cornerRadius(10)
+                                            .foregroundColor(.white)
+                                            .autocapitalization(.none)
+                                            .keyboardType(.emailAddress)
+                                            .overlay(
+                                                RoundedRectangle(cornerRadius: 10)
+                                                    .stroke(Color.white.opacity(0.5), lineWidth: 1)
+                                            )
+                                    }
+                        ZStack(alignment: .leading) {
+                                        if password.isEmpty {
+                                            Text("Password")
+                                                .foregroundColor(Color.white.opacity(1)) // Placeholder color
+                                                .padding(.leading, 5) // Aligning with text field padding
+                                        }
+                                        SecureField("", text: $password)
+                                            .padding()
+                                            .background(Color.white.opacity(0.2))
+                                            .cornerRadius(10)
+                                            .foregroundColor(.white)
+                                            .overlay(
+                                                RoundedRectangle(cornerRadius: 10)
+                                                    .stroke(Color.white.opacity(0.5), lineWidth: 1)
+                                            )
+                                    }                    }
                     .padding(.horizontal, 20)
-                    .shadow(radius: 5)
 
-                    // Next Button with Gradient and Shadow
-                    NavigationLink(destination: PersonalDetailsView(), isActive: $navigateToNextPage) {
-                        Button(action: {
-                            navigateToNextPage = true
-                        }) {
-                            Text("Next")
-                                .font(.headline)
-                                .foregroundColor(.black)
-                                .frame(maxWidth: .infinity)
-                                .padding()
-                                .background(
-                                    LinearGradient(
-                                        gradient: Gradient(colors: [Color.yellow, Color.orange]),
-                                        startPoint: .leading,
-                                        endPoint: .trailing
-                                    )
-                                )
-                                .cornerRadius(12)
-                                .shadow(color: Color.yellow.opacity(0.5), radius: 10, x: 0, y: 5)
-                        }
-                        .padding(.horizontal, 20)
-                    }
-                    .isDetailLink(false)
+                    // Sign In Button
+                    Button(action: {
+                                            signInWithEmail()
+                                        }) {
+                                            Text("Sign In")
+                                                .font(.headline)
+                                                .foregroundColor(.black)
+                                                .frame(maxWidth: .infinity)
+                                                .padding()
+                                                .background(
+                                                    LinearGradient(
+                                                        gradient: Gradient(colors: [Color.yellow, Color.orange]),
+                                                        startPoint: .leading,
+                                                        endPoint: .trailing
+                                                    )
+                                                )
+                                                .cornerRadius(12)
+                                                .shadow(color: Color.yellow.opacity(0.5), radius: 10, x: 0, y: 5)
+                                        }
+                                        .padding(.horizontal, 20)
 
-                    
+                                        if let errorMessage = errorMessage {
+                                            Text(errorMessage)
+                                                .foregroundColor(.red)
+                                        }
+
+                                        if isLoading {
+                                            ProgressView()
+                                        }
+
+                                    }
+                                }
+                                .navigationBarHidden(true) // Hides the navigation bar
+                                .fullScreenCover(isPresented: $navigateToNextPage) {
+                                    PersonalDetailsView()
+                                        .navigationBarBackButtonHidden(true) // Ensures back button is hidden
+                                }
+        }
+    }
+
+    private func signInWithEmail() {
+        guard !username.isEmpty, !password.isEmpty else {
+            errorMessage = "All fields are required."
+            return
+        }
+        
+        // Prepare the data you need to send to your API
+        let jsonData: [String: Any] = [
+            "email": username.lowercased(),
+            "password": password.lowercased()
+        ]
+        
+        // Serialize to JSON data
+        guard let data = try? JSONSerialization.data(withJSONObject: jsonData, options: []) else {
+            errorMessage = "Failed to serialize data."
+            return
+        }
+        
+        isLoading = true
+
+        // Call the network service to post the data
+        NetworkService.shared.postData(to: "http://localhost:4000/api/v1/sign-in", with: data) { (result: Result<LoginResponse, NetworkError>) in
+            isLoading = false
+            errorMessage = nil
+            switch result {
+            case .success(let response):
+                if response.success {
+                                print("Login successful: \(response.message)")
+                                
+                                // Store the token securely (for example, using UserDefaults for now)
+                    UserDefaults.standard.set(response.token, forKey: "accessToken")
+                                
+                                // Navigate to the next page
+                                navigateToNextPage = true
+                            } else {
+                                errorMessage = response.message // Set error message here
+                            }
+            case .failure(let error):
+                switch error {
+                case .badURL:
+                    errorMessage = "Invalid URL"
+                case .requestFailed:
+                    errorMessage = "Request failed"
+                case .decodingFailed:
+                    errorMessage = "Decoding failed"
                 }
             }
         }
     }
+
 }
 
-// Example Next Page (Replace with your actual next page)
-struct NextPageView: View {
-    var body: some View {
-        VStack {
-            Text("This is the next page!")
-                .font(.largeTitle)
-                .foregroundColor(.white)
-                .padding()
-        }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .background(Color.black.edgesIgnoringSafeArea(.all))
-    }
-}
 
 struct WelcomeView_Previews: PreviewProvider {
     static var previews: some View {
-        WelcomeView()
+        WelcomeView().preferredColorScheme(.dark)
     }
 }

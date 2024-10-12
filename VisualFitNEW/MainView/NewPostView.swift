@@ -1,11 +1,3 @@
-//
-//  NewPostView.swift
-//  VisualFitNEW
-//
-//  Created by Sharanpreet Singh  on 12/10/24.
-//
-
-
 import SwiftUI
 import UIKit
 
@@ -53,10 +45,14 @@ struct NewPostView: View {
     @State private var audienceSelection: String = "Everyone"
     @State private var addLocation: Bool = false
     @State private var boostPost: Bool = false
-    
+
     // For image picker
     @State private var showImagePicker: Bool = false
     @State private var selectedImage: UIImage? = nil
+    
+    // State variables for uploading state and messages
+    @State private var isUploading: Bool = false
+    @State private var uploadMessage: String = ""
 
     var body: some View {
         VStack(spacing: 20) {
@@ -174,11 +170,30 @@ struct NewPostView: View {
 
             Spacer()
 
-            // Share Button
             Button(action: {
-                // Share post action
+                // Set uploading state
+                isUploading = true
+                uploadMessage = ""
+
+                NetworkService.shared.postImageData(to: "http://localhost:4000/api/v1/post/createPost", image: selectedImage!, title: caption) { result in
+                    // Reset uploading state after completion
+                    DispatchQueue.main.async {
+                        isUploading = false // Reset the uploading state
+                        
+                        switch result {
+                        case .success(let postResponse):
+                            print("Post created successfully: \(postResponse)")
+                            uploadMessage = "Post created successfully!" // Update the message
+                            // Dismiss the view after successful upload
+                            presentationMode.wrappedValue.dismiss()
+                        case .failure(let error):
+                            print("Failed to create post: \(error)")
+                            uploadMessage = "Failed to create post." // Update the message
+                        }
+                    }
+                }
             }) {
-                Text("Share")
+                Text(isUploading ? "Uploading..." : "Share")
                     .font(.headline)
                     .foregroundColor(.white)
                     .frame(maxWidth: .infinity)
@@ -187,7 +202,15 @@ struct NewPostView: View {
                     .cornerRadius(10)
                     .padding(.horizontal)
             }
+            .disabled(isUploading)
             .padding(.bottom)
+
+            // Upload Message
+            if !uploadMessage.isEmpty {
+                Text(uploadMessage)
+                    .foregroundColor(.white)
+                    .padding()
+            }
         }
         .background(Color.black.edgesIgnoringSafeArea(.all)) // Set background to black
         .navigationBarBackButtonHidden(true)
@@ -199,7 +222,7 @@ struct NewPostView: View {
 
 struct NewPostView_Previews: PreviewProvider {
     static var previews: some View {
-        NavigationView { // Ensure to use NavigationView in the previews
+        NavigationView {
             NewPostView()
         }
     }

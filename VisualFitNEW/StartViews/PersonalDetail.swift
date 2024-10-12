@@ -154,6 +154,9 @@ struct PersonalDetailsView: View {
                         LogoutModal(isPresented: $showLogoutModal) {
                             print("User logged out")
                             UserDefaults.standard.removeObject(forKey: "accessToken")
+                            UserDefaults.standard.removeObject(forKey: "personalDetailsFlag")
+                            UserDefaults.standard.removeObject(forKey: "isGoalSetForUser")
+                            UserDefaults.standard.removeObject(forKey: "isFitnessGoalsSet")
                             navigateToWelcomeView = true
                         }
                         .frame(maxWidth: geometry.size.width, maxHeight: geometry.size.height * 0.4)
@@ -165,7 +168,11 @@ struct PersonalDetailsView: View {
                 .edgesIgnoringSafeArea(.bottom)
             }
         }.fullScreenCover(isPresented: $navigateToWelcomeView) {
-            WelcomeView()
+            WelcomeView(
+                isPersonalDetailsFilled: UserDefaults.standard.bool(forKey: "personalDetailsFlag") ?? false,
+                isGoalSetForUser: UserDefaults.standard.bool(forKey: "isGoalSetForUser") ?? false,
+                isFitnessGoalsSet: UserDefaults.standard.bool(forKey: "isFitnessGoalsSet") ?? false
+            )
         }
     }
 
@@ -197,7 +204,7 @@ struct PersonalDetailsView: View {
             case .success(let response):
                 if response.success {
                     print("Details Updated:  \(response.message)")
-                    UserDefaults.standard.set("true", forKey: "personalDetailsFlag")
+                    UserDefaults.standard.set(true, forKey: "personalDetailsFlag")
                     showSetGoalView = true
                 } else {
                     errorMessage = response.message

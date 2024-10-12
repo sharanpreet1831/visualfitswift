@@ -1,13 +1,7 @@
-//
-//  SummaryView.swift
-//  VisualFitNEW
-//
-//  Created by Sharanpreet Singh  on 11/10/24.
-//
 import SwiftUI
 import UIKit
 
-// View for handling image picker (Camera access)
+// Image Picker View
 struct ImagePickerView: UIViewControllerRepresentable {
     @Environment(\.presentationMode) var presentationMode
     var sourceType: UIImagePickerController.SourceType = .camera
@@ -54,191 +48,211 @@ struct DatePickerView: View {
     var body: some View {
         VStack {
             DatePicker("Select Date", selection: $selectedDate, displayedComponents: .date)
-                .datePickerStyle(GraphicalDatePickerStyle()) // Use graphical style for a calendar-like view
+                .datePickerStyle(GraphicalDatePickerStyle())
                 .padding()
-            
+
             Button("Done") {
-                presentationMode.wrappedValue.dismiss() // Close the sheet when done is tapped
+                presentationMode.wrappedValue.dismiss()
             }
             .padding()
             .foregroundColor(.yellow)
         }
-        .background(Color.black.edgesIgnoringSafeArea(.all)) // Optional: change the background to match the theme
+        .background(Color.black.edgesIgnoringSafeArea(.all))
     }
 }
 
+// Summary View
 struct SummaryView: View {
-    @State private var headerHeight: CGFloat = 100 // Initial height of the header
-    @State private var showCamera = false // State to toggle camera view
+    @State private var headerHeight: CGFloat = 100
+    @State private var showCamera = false
     @State private var selectedImage: UIImage?
-    @State private var showCalendar = false // State to toggle calendar view
-    @State private var selectedDate = Date() // Holds the selected date
-
+    @State private var showCalendar = false
+    @State private var selectedDate = Date()
+    
     var body: some View {
         NavigationView {
             ZStack(alignment: .top) {
                 ScrollView {
                     VStack(spacing: 20) {
-                        GeometryReader { geometry in
-                            // Dynamic Shrinking Header if needed, currently placeholder
-                            VStack {
-                                // Dynamic Shrinking Summary Heading
-                                Text("Summary")
-                                    .font(.system(size: max(30 - (geometry.frame(in: .global).minY / 5), 20)))
-                                    .bold()
-                                    .foregroundColor(.white)
-                                    .frame(maxWidth: .infinity)
-                                    .padding(.top, 50) // Padding from the top of the view
-                                    .opacity(Double(1 - (geometry.frame(in: .global).minY / 100))) // Fade out slightly
-                            }
-                            .frame(height: 100)
-                        }
-                        .frame(height: headerHeight) // Initial height of the header
-                        
-                        // Main content of the page (scrollable)
-                        VStack(spacing: 20) {
-                            // Transformation Section
-                            HStack(spacing: 0) { // No spacing for half-half layout
-                                Image("before") // Placeholder, replace with actual image
-                                    .resizable()
-                                    .frame(width: UIScreen.main.bounds.width / 2, height: 200)
-                                    .clipped() // Ensures image fills the area
-
-                                Image("after") // Placeholder, replace with actual image
-                                    .resizable()
-                                    .frame(width: UIScreen.main.bounds.width / 2, height: 200)
-                                    .clipped() // Ensures image fills the area
-                            }
-
-                            // Transformation Label
-                            Text("Your Expected Transformation")
-                                .font(.headline)
-                                .foregroundColor(.white)
-                            
-                            // Activity Section
-                            VStack {
-                                Text("Activity")
-                                    .font(.title2)
-                                    .bold()
-                                    .foregroundColor(.white)
-                                
-                                HStack {
-                                    ActivityCard(title: "Steps", value: "9,289")
-                                        .frame(width:200, height: 200)
-                                        //.frame(width: UIScreen.main.bounds.width / 2 )
-                                    // Ensure half the screen width
-                                    ActivityCard(title: "Calories", value: "565 Kcal")
-                                        .frame(width: UIScreen.main.bounds.width / 2 ) // Ensure half the screen width
-                                }
-                                
-                                HStack {
-                                    ActivityCard(title: "Distance", value: "2.1 km")
-                                        .frame(width: UIScreen.main.bounds.width / 2 - 15) // Ensure half the screen width
-                                    ActivityCard(title: "Weekly Goal", value: "5 Days")
-                                        .frame(width: UIScreen.main.bounds.width / 2 - 15) // Ensure half the screen width
-                                }
-                            }
-                            
-                            // Achievements Section
-                            VStack(alignment: .leading, spacing: 10) {
-                                Text("Achievements")
-                                    .font(.title2)
-                                    .bold()
-                                    .foregroundColor(.white)
-                                
-                                HStack(spacing: 10) {
-                                    AchievementBadge(days: 7)
-                                        .frame(maxWidth: .infinity) // Ensures equal spacing for badges
-                                    AchievementBadge(days: 15)
-                                        .frame(maxWidth: .infinity) // Ensures equal spacing for badges
-                                }
-                            }
-                        }
-                        .padding(.horizontal) // Horizontal padding for scroll content
-                        .padding(.top, 20) // Top padding to give space under the header
+                        headerView
+                        contentView
+                            .padding(.horizontal)
+                            .padding(.top, 20)
                     }
+                    .padding(.bottom, 40) // Add some padding at the bottom to avoid being too close to the tab bar
                 }
-                .background(Color.black) // Background remains black
+                .background(Color.black)
             }
-            .background(Color.black) // Black background for the entire view
-            .edgesIgnoringSafeArea(.all) // Extend background to edges
-            .navigationBarTitleDisplayMode(.inline) // Enable collapsing of the title
+            .background(Color.black)
+            .edgesIgnoringSafeArea(.top) // Only ignore safe area at the top
+            .navigationBarTitleDisplayMode(.inline)
             .toolbar {
-                // Camera button
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    Button(action: {
-                        showCamera = true
-                    }) {
-                        Image(systemName: "camera.fill")
-                            .foregroundColor(.yellow)
-                    }
-                }
-                
-                // Calendar button
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    Button(action: {
-                        showCalendar = true
-                    }) {
-                        Image(systemName: "calendar")
-                            .foregroundColor(.yellow)
-                    }
-                }
+                toolbarButtons
             }
         }
-        .accentColor(.white) // Make title and icons white in the navigation bar
+        .accentColor(.white)
         .sheet(isPresented: $showCamera) {
-            ImagePickerView(sourceType: .camera, selectedImage: $selectedImage) // Show camera
+            ImagePickerView(sourceType: .camera, selectedImage: $selectedImage)
         }
         .sheet(isPresented: $showCalendar) {
-            DatePickerView(selectedDate: $selectedDate) // Show calendar
+            DatePickerView(selectedDate: $selectedDate)
         }
     }
-}
-
-// ActivityCard and AchievementBadge structures
-
-struct ActivityCard: View {
-    var title: String
-    var value: String
     
-    var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text(title)
-                .font(.subheadline)
-                .foregroundColor(.gray)
-            Text(value)
-                .font(.title2)
-                .foregroundColor(.yellow)
+    // Header View
+    private var headerView: some View {
+        GeometryReader { geometry in
+            VStack {
+                Text("Summary")
+                    .font(.system(size: max(30 - (geometry.frame(in: .global).minY / 5), 20)))
+                    .bold()
+                    .foregroundColor(.white)
+                    .frame(maxWidth: .infinity)
+                    .padding(.top, 50)
+                    .opacity(Double(1 - (geometry.frame(in: .global).minY / 100)))
+            }
+            .frame(height: headerHeight)
         }
-        .padding()
-        .background(Color.gray.opacity(0.2))
-        .cornerRadius(12)
-       
-    }
-}
-
-struct AchievementBadge: View {
-    var days: Int
-    
-    var body: some View {
-        VStack {
-            Image(systemName: "shield.fill")
-                .resizable()
-                .scaledToFit()
-                .frame(width: 100, height: 100)
-                .foregroundColor(.black)
-            Text("\(days) DAYS")
-                .font(.title)
-                .bold()
-                .foregroundColor(.yellow)
-        }
-        .padding()
+        .frame(height: headerHeight)
         .background(Color.black)
-        .cornerRadius(12)
-        .frame(maxWidth: .infinity) // Ensures equal spacing for the badge
     }
+    
+    // Content View
+    private var contentView: some View {
+        VStack(spacing: 20) {
+            transformationSection
+            activitySection
+            achievementsSection
+        }
+    }
+    
+    // Transformation Section
+    private var transformationSection: some View {
+        VStack {
+            HStack(spacing: 0) {
+                Image("before") // Placeholder
+                    .resizable()
+                    .frame(width: UIScreen.main.bounds.width / 2, height: 200)
+                    .clipped()
+                
+                Image("after") // Placeholder
+                    .resizable()
+                    .frame(width: UIScreen.main.bounds.width / 2, height: 200)
+                    .clipped()
+            }
+            
+            Text("Your Expected Transformation")
+                .font(.headline)
+                .foregroundColor(.white)
+                .padding(.vertical, 10)
+        }
+    }
+    
+    // Activity Section
+    private var activitySection: some View {
+        VStack {
+            Text("Activity")
+                .font(.title2)
+                .bold()
+                .foregroundColor(.white)
+            
+            HStack(spacing: 15) {
+                ActivityCard(title: "Steps", value: "9,289")
+                    .frame(width: UIScreen.main.bounds.width / 2 - 15)
+                ActivityCard(title: "Calories", value: "565 Kcal")
+                    .frame(width: UIScreen.main.bounds.width / 2 - 15)
+            }
+            .padding(.bottom)
+            
+            HStack(spacing: 15) {
+                ActivityCard(title: "Distance", value: "2.1 km")
+                    .frame(width: UIScreen.main.bounds.width / 2 - 15)
+                ActivityCard(title: "Weekly Goal", value: "5 Days")
+                    .frame(width: UIScreen.main.bounds.width / 2 - 15)
+            }
+        }
+        .padding(.bottom)
+    }
+    
+    // Achievements Section
+    private var achievementsSection: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Text("Achievements")
+                .font(.title2)
+                .bold()
+                .foregroundColor(.white)
+            
+            HStack(spacing: 10) {
+                AchievementBadge(days: 7)
+                AchievementBadge(days: 15)
+            }
+        }
+    }
+    
+    private var toolbarButtons: some ToolbarContent {
+        Group {
+            ToolbarItem(placement: .navigationBarTrailing) {
+                Button(action: { showCamera = true }) {
+                    Image(systemName: "camera.fill")
+                        .foregroundColor(.yellow)
+                }
+            }
+            
+            ToolbarItem(placement: .navigationBarTrailing) {
+                Button(action: { showCalendar = true }) {
+                    Image(systemName: "calendar")
+                        .foregroundColor(.yellow)
+                }
+            }
+        }
+    }
+    
+    // ActivityCard and AchievementBadge structures
+    struct ActivityCard: View {
+        var title: String
+        var value: String
+        
+        var body: some View {
+            VStack(alignment: .leading, spacing: 8) {
+                Text(title)
+                    .font(.subheadline)
+                    .foregroundColor(.gray)
+                Text(value)
+                    .font(.title2)
+                    .foregroundColor(.yellow)
+            }
+            .padding()
+            .background(Color.gray.opacity(0.2))
+            .cornerRadius(12)
+        }
+    }
+    
+    struct AchievementBadge: View {
+        var days: Int
+        
+        var body: some View {
+            VStack {
+                Image(systemName: "shield.fill")
+                    .resizable()
+                    .scaledToFit()
+                    .frame(width: 100, height: 100)
+                    .foregroundColor(.black)
+                Text("\(days) DAYS")
+                    .font(.title)
+                    .bold()
+                    .foregroundColor(.yellow)
+            }
+            .padding()
+            .background(Color.black)
+            .cornerRadius(12)
+            .frame(maxWidth: .infinity)
+        }
+    }
+
 }
 
-#Preview {
-    SummaryView()
+struct SummaryView_Preview: PreviewProvider {
+    static var previews: some View {
+        SummaryView()
+    }
 }

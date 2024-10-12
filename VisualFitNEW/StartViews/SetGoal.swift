@@ -103,6 +103,9 @@ struct SetGoalView: View {
                         LogoutModal(isPresented: $showLogoutModal) {
                             print("User logged out")
                             UserDefaults.standard.removeObject(forKey: "accessToken")
+                            UserDefaults.standard.removeObject(forKey: "personalDetailsFlag")
+                            UserDefaults.standard.removeObject(forKey: "isGoalSetForUser")
+                            UserDefaults.standard.removeObject(forKey: "isFitnessGoalsSet")
                             navigateToWelcomeView = true
                         }
                         .frame(maxWidth: geometry.size.width, maxHeight: geometry.size.height * 0.4)
@@ -114,7 +117,11 @@ struct SetGoalView: View {
             }
         }
         .fullScreenCover(isPresented: $navigateToWelcomeView) {
-            WelcomeView()
+            WelcomeView(
+                isPersonalDetailsFilled: UserDefaults.standard.bool(forKey: "personalDetailsFlag") ?? false,
+                isGoalSetForUser: UserDefaults.standard.bool(forKey: "isGoalSetForUser") ?? false,
+                isFitnessGoalsSet: UserDefaults.standard.bool(forKey: "isFitnessGoalsSet") ?? false
+            )
         }
     }
 
@@ -137,7 +144,7 @@ struct SetGoalView: View {
             case .success(let response):
                 if response.success {
                     print("Details Updated:  \(response.message)")
-                    UserDefaults.standard.set("true", forKey: "isGoalSetForUser")
+                    UserDefaults.standard.set(true, forKey: "isGoalSetForUser")
                     showFitnessGoalView = true
                 } else {
                     errorMessage = response.message

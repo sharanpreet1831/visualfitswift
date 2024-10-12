@@ -1,29 +1,53 @@
-//
-//  ProfileView.swift
-//  VisualFitNEW
-//
-//  Created by Sharanpreet Singh  on 12/10/24.
-//
-
 import SwiftUI
 
 struct ProfileView: View {
-    // Replace this with your actual image
-    @State private var profileImage = UIImage(named: "profile") ?? UIImage(systemName: "person.crop.circle.fill")!
-
+    @State private var showLogoutModal: Bool = false // For logout confirmation modal
+    @State private var navigateToWelcomeView: Bool = false // To control navigation after logout
+    
     var body: some View {
         VStack {
             Spacer().frame(height: 50)
             
             // Profile Image Section
             VStack {
-                Image(uiImage: profileImage) // Displaying profile image
-                    .resizable()
-                    .frame(width: 120, height: 120)
-                    .clipShape(Circle())
-                    .overlay(Circle().stroke(Color.white, lineWidth: 4))
-                
-                // Edit button over the image
+                if let imageUrlString = UserDefaults.standard.string(forKey: "profilePicture") {
+                    if let imageUrl = URL(string: imageUrlString.replacingOccurrences(of: "svg", with: "png")) {
+                        AsyncImage(url: imageUrl) { image in
+                            image
+                                .resizable()
+                                .aspectRatio(contentMode: .fill)
+                                .frame(width: 100, height: 100)
+                                .clipShape(Circle())
+                                .overlay(Circle().stroke(Color.white, lineWidth: 4))
+                                .shadow(radius: 10)
+                        } placeholder: {
+                            Image(systemName: "person.crop.circle.fill")
+                                .resizable()
+                                .aspectRatio(contentMode: .fill)
+                                .frame(width: 100, height: 100)
+                                .clipShape(Circle())
+                                .overlay(Circle().stroke(Color.white, lineWidth: 4))
+                                .shadow(radius: 10)
+                        }
+                    } else {
+                        Image(systemName: "person.crop.circle.fill")
+                            .resizable()
+                            .aspectRatio(contentMode: .fill)
+                            .frame(width: 100, height: 100)
+                            .clipShape(Circle())
+                            .overlay(Circle().stroke(Color.white, lineWidth: 4))
+                            .shadow(radius: 10)
+                    }
+                } else {
+                    Image(systemName: "person.crop.circle.fill")
+                        .resizable()
+                        .aspectRatio(contentMode: .fill)
+                        .frame(width: 100, height: 100)
+                        .clipShape(Circle())
+                        .overlay(Circle().stroke(Color.white, lineWidth: 4))
+                        .shadow(radius: 10)
+                }
+
                 Button(action: {
                     // Action to change profile image
                 }) {
@@ -34,12 +58,12 @@ struct ProfileView: View {
                         .offset(x: 40, y: -40)
                 }
                 
-                Text("Sharan")
+                Text(UserDefaults.standard.string(forKey: "name") ?? "Unknown")
                     .font(.title)
                     .foregroundColor(.white)
                     .bold()
-                
-                Text("sharan@gmail.com")
+
+                Text(UserDefaults.standard.string(forKey: "email") ?? "Unknown")
                     .font(.subheadline)
                     .foregroundColor(.gray)
             }
@@ -89,8 +113,45 @@ struct ProfileView: View {
             .padding()
             
             Spacer()
+            
+            // Logout Button
+            Button(action: {
+                showLogoutModal.toggle()
+            }) {
+                Text("Logout")
+                    .foregroundColor(.red)
+                    .font(.headline)
+                    .frame(maxWidth: .infinity)
+                    .padding()
+                    .background(Color.black.opacity(0.2))
+                    .cornerRadius(10)
+                    .padding(.horizontal)
+            }.padding(.bottom,40)
+            
+            Spacer()
         }
         .background(Color.black.edgesIgnoringSafeArea(.all)) // Set the background to black
+        .fullScreenCover(isPresented: $navigateToWelcomeView) {
+            WelcomeView(
+                isPersonalDetailsFilled: UserDefaults.standard.bool(forKey: "personalDetailsFlag") ?? false,
+                isGoalSetForUser: UserDefaults.standard.bool(forKey: "isGoalSetForUser") ?? false,
+                isFitnessGoalsSet: UserDefaults.standard.bool(forKey: "isFitnessGoalsSet") ?? false
+            )
+        }
+        .alert(isPresented: $showLogoutModal) {
+            Alert(
+                title: Text("Logout"),
+                message: Text("Are you sure you want to log out?"),
+                primaryButton: .destructive(Text("Logout")) {
+                    UserDefaults.standard.removeObject(forKey: "accessToken")
+                    UserDefaults.standard.removeObject(forKey: "personalDetailsFlag")
+                    UserDefaults.standard.removeObject(forKey: "isGoalSetForUser")
+                    UserDefaults.standard.removeObject(forKey: "isFitnessGoalsSet")
+                    navigateToWelcomeView = true
+                },
+                secondaryButton: .cancel()
+            )
+        }
     }
 }
 

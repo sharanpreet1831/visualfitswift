@@ -123,6 +123,7 @@ struct PeerView: View {
                     }
                 }
                 .padding(.top, 20)
+                .padding(.bottom,80)
                 .padding(.horizontal)
             }
             .frame(maxHeight: .infinity)

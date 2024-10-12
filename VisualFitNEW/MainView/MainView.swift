@@ -1,14 +1,7 @@
-//
-//  MainView.swift
-//  VisualFitNEW
-//
-//  Created by Sharanpreet Singh  on 11/10/24.
-//
-
 import SwiftUI
 
 struct MainView: View {
-    @State var selectedTab = 0 // Set default tab to Summary (0)
+    @State private var selectedTab = 0 // Set default tab to Summary (0)
 
     init() {
         // Customize the appearance of the tab bar
@@ -55,6 +48,8 @@ struct MainView: View {
     }
 }
 
-#Preview {
-    MainView()
+struct MainView_Previews: PreviewProvider {
+    static var previews: some View {
+        MainView()
+    }
 }

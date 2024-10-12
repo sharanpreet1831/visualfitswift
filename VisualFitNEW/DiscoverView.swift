@@ -6,47 +6,66 @@
 //
 
 import SwiftUI
-import UIKit
 
 struct DiscoverView: View {
     @State private var selectedTab: Int = 0
+    @State private var showNewPostView: Bool = false // Control navigation to NewPostView
 
     var body: some View {
-        VStack {
-            // Header Section
-            HStack {
-                Text("Discover")
-                    .font(.largeTitle)
-                    .bold()
-                    .foregroundColor(.white)
-                Spacer()
-            }
-            .padding(.horizontal)
-            .padding(.top, 20)
+        NavigationView {
+            VStack {
+                // Header Section with "+" button
+                HStack {
+                    Text("Discover")
+                        .font(.largeTitle)
+                        .bold()
+                        .foregroundColor(.white)
+                    Spacer()
+                    
+                    // "+" Button
+                    Button(action: {
+                        // Set this to true to open NewPostView
+                        showNewPostView = true
+                    }) {
+                        Image(systemName: "plus.circle.fill")
+                            .resizable()
+                            .frame(width: 30, height: 30)
+                            .foregroundColor(.yellow) // Change button color if needed
+                    }
+                    .background(
+                        // NavigationLink to navigate to NewPostView
+                        NavigationLink(destination: NewPostView(), isActive: $showNewPostView) {
+                            EmptyView()
+                        }
+                    )
+                }
+                .padding(.horizontal)
+                .padding(.top, 20)
 
-            // Segmented Control
-            Picker(selection: $selectedTab, label: Text("Discover Options")) {
-                Text("Journeys").tag(0)
-                Text("Transformations").tag(1)
-            }
-            .pickerStyle(SegmentedPickerStyle())
-            .padding(.horizontal)
-            .colorMultiply(.yellow)
+                // Segmented Control
+                Picker(selection: $selectedTab, label: Text("Discover Options")) {
+                    Text("Journeys").tag(0)
+                    Text("Transformations").tag(1)
+                }
+                .pickerStyle(SegmentedPickerStyle())
+                .padding(.horizontal)
+                .colorMultiply(.yellow)
 
-            // Content Section
-            ScrollView {
-                if selectedTab == 0 {
-                    JourneyListView()
-                } else {
-                    TransformationListView()
+                // Content Section
+                ScrollView {
+                    if selectedTab == 0 {
+                        JourneyListView()
+                    } else {
+                        TransformationListView()
+                    }
                 }
             }
+            .tabItem {
+                Image(systemName: "globe")
+                Text("Discover")
+            }
+            .background(Color.black.edgesIgnoringSafeArea(.all)) // Set the background to black
         }
-        .tabItem {
-            Image(systemName: "globe")
-            Text("Discover")
-        }
-        .background(Color.black.edgesIgnoringSafeArea(.all)) // Set the background to black
     }
 }
 
@@ -164,38 +183,9 @@ struct JourneyCardView: View {
     }
 }
 
-struct TabBarView: View {
-    var body: some View {
-        TabView {
-            DiscoverView()
-                .tabItem {
-                    Image(systemName: "globe")
-                    Text("Discover")
-                }
-            // Other Tabs here
-        }
-    }
-}
-
+// Preview
 struct ContentView_Previews: PreviewProvider {
     static var previews: some View {
         DiscoverView()
-    }
-}
-
-// Custom corner radius extension for buttons
-extension View {
-    func cornerRadius(_ radius: CGFloat, corners: UIRectCorner) -> some View {
-        clipShape(RoundedCorners(radius: radius, corners: corners))
-    }
-}
-
-struct RoundedCorners: Shape {
-    var radius: CGFloat = .infinity
-    var corners: UIRectCorner = .allCorners
-    
-    func path(in rect: CGRect) -> Path {
-        let path = UIBezierPath(roundedRect: rect, byRoundingCorners: corners, cornerRadii: CGSize(width: radius, height: radius))
-        return Path(path.cgPath)
     }
 }

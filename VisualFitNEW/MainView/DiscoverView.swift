@@ -4,6 +4,12 @@ struct DiscoverView: View {
     @State private var selectedTab: Int = 0
     @State private var showNewPostView: Bool = false
     @StateObject private var viewModel = PostViewModel()
+    
+    init() {
+        UISegmentedControl.appearance().selectedSegmentTintColor = UIColor.systemYellow
+            UISegmentedControl.appearance().setTitleTextAttributes([.foregroundColor: UIColor.black], for: .selected)
+            UISegmentedControl.appearance().setTitleTextAttributes([.foregroundColor: UIColor.systemYellow], for: .normal)
+    }
 
     var body: some View {
         NavigationView {
@@ -50,15 +56,15 @@ struct DiscoverView: View {
 
     private var segmentedControl: some View {
         Picker(selection: $selectedTab, label: Text("Discover Options")) {
-            Text("Journeys").tag(0)
-            Text("Transformations").tag(1)
-        }
-        .pickerStyle(SegmentedPickerStyle())
-        .padding(.horizontal)
-        .colorMultiply(.yellow)
+                    Text("Journeys").tag(0)
+                    Text("Transformations").tag(1)
+                }
+                .pickerStyle(SegmentedPickerStyle())
+                .padding(.horizontal)
     }
 
     private var contentSection: some View {
+        
         ScrollView {
             if selectedTab == 0 {
                 JourneyListView(posts: viewModel.posts, likePost: likePost, commentOnPost: commentOnPost)
@@ -149,8 +155,20 @@ struct JourneyListView: View {
 
     var body: some View {
         VStack {
-            ForEach(posts) { post in
-                JourneyCardView(post: post, likePost: likePost, commentOnPost: commentOnPost)
+            if posts.isEmpty {
+                VStack {
+                    Spacer()
+                        Text("No posts available")
+                            .font(.headline)
+                            .foregroundColor(.gray)
+                            .multilineTextAlignment(.center)
+                    Spacer()
+                    }
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+            }else{
+                ForEach(posts) { post in
+                    JourneyCardView(post: post, likePost: likePost, commentOnPost: commentOnPost)
+                }
             }
         }
     }
@@ -162,9 +180,21 @@ struct TransformationListView: View {
     var commentOnPost: (String, String) -> Void
 
     var body: some View {
-        VStack {
-            ForEach(posts) { post in
-                JourneyCardView(post: post, likePost: likePost, commentOnPost: commentOnPost)
+        if posts.isEmpty {
+            VStack {
+                Spacer()
+                    Text("No posts available")
+                        .font(.headline)
+                        .foregroundColor(.gray)
+                        .multilineTextAlignment(.center)
+                Spacer()
+                }
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+        }else{
+            VStack {
+                ForEach(posts) { post in
+                    JourneyCardView(post: post, likePost: likePost, commentOnPost: commentOnPost)
+                }
             }
         }
     }
@@ -215,7 +245,7 @@ struct JourneyCardView: View {
 
     private var postDetails: some View {
         VStack(alignment: .leading) {
-            Text(post.userId.username)
+            Text(post.userId?.username ?? "Unknown User")
                 .font(.headline)
                 .foregroundColor(.white)
             Text(post.title)
